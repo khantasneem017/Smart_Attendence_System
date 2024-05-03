@@ -2,7 +2,9 @@ import cv2
 import numpy as np
 import face_recognition
 import os
-from datetime import datetime
+import xlrd, xlwt
+from xlutils.copy import copy as xl_copy
+from datetime import date, datetime
 
 # from PIL import ImageGrab
 
@@ -20,8 +22,6 @@ print(classNames)
 
 def findEncodings(images):
     encodeList = []
-
-
     for img in images:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         encode = face_recognition.face_encodings(img)[0]
@@ -29,19 +29,6 @@ def findEncodings(images):
     return encodeList
 
 
-def markAttendance(name):
-    with open('Attendance.csv', 'r+') as f:
-        myDataList = f.readlines()
-
-
-        nameList = []
-        for line in myDataList:
-            entry = line.split(',')
-            nameList.append(entry[0])
-            if name not in nameList:
-                now = datetime.now()
-                dtString = now.strftime('%H:%M:%S')
-                f.writelines(f'\n{name},{dtString}')
 
 #### FOR CAPTURING SCREEN RATHER THAN WEBCAM
 # def captureScreen(bbox=(300,300,690+300,530+300)):
@@ -53,7 +40,16 @@ encodeListKnown = findEncodings(images)
 print('Encoding Complete')
 
 cap = cv2.VideoCapture(0)
-
+rb = xlrd.open_workbook('attendence_excel.xls', formatting_info=True) 
+wb = xl_copy(rb)
+inp = input('Please give current subject lecture name')
+sheet1 = wb.add_sheet(inp)
+sheet1.write(0, 0, 'Name/Date')
+sheet1.write(0, 1, str(date.today()))
+row=1
+col=0
+op='Y'
+already_attendence_taken = ""
 while True:
     success, img = cap.read()
    # img = captureScreen()
@@ -77,7 +73,22 @@ while True:
             cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
             cv2.rectangle(img, (x1, y2 - 35), (x2, y2), (0, 255, 0), cv2.FILLED)
             cv2.putText(img, name, (x1 + 6, y2 - 6), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2)
-            markAttendance(name)
+            while(op=='Y' or op == 'y'):
+                if((already_attendence_taken != name) and (name != "Unknown")):
+                    sheet1.write(row, col, name )
+                    col =col+1
+                    sheet1.write(row, col, "Present" )
+                    row = row+1
+                    col = 0
+                    print("attendence taken")
+                    wb.save('attendence_excel.xls')
+                    already_attendence_taken = name
+                    op = input('Do you want to continue: (Y/N) ')
+                else:
+                    print("next student")
+                    op = input('Do you want to continue: (Y/N) ')
+                break
+
 
     cv2.imshow('Webcam', img)
     cv2.waitKey(1)
