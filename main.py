@@ -5,6 +5,7 @@ import os
 import xlrd, xlwt
 from xlutils.copy import copy as xl_copy
 from datetime import date, datetime
+from sklearn.metrics import accuracy_score
 
 # from PIL import ImageGrab
 
@@ -67,6 +68,9 @@ while True:
 
         if matches[matchIndex]:
             name = classNames[matchIndex].upper()
+            # checking accuracy
+            # acc = accuracy_score(encodeListKnown[matchIndex], encodeFace)
+            # name.append(acc)
      # print(name)
             y1, x2, y2, x1 = faceLoc
             y1, x2, y2, x1 = y1 * 4, x2 * 4, y2 * 4, x1 * 4
@@ -91,4 +95,6 @@ while True:
 
 
     cv2.imshow('Webcam', img)
-    cv2.waitKey(1)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
